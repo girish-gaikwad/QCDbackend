@@ -3,12 +3,25 @@ const express = require("express");
 const cors = require("cors");
 const fs = require("fs");
 const { BigQuery } = require("@google-cloud/bigquery");
-
+ const dotenv = require('dotenv').config();
 const path = require("path");
 
+let credentials;
+try {
+  if (!process.env.GOOGLE_CLOUD_CREDENTIALS) {
+    throw new Error('GOOGLE_CLOUD_CREDENTIALS environment variable is not set');
+  }
+  
+  credentials = JSON.parse(
+    Buffer.from(process.env.GOOGLE_CLOUD_CREDENTIALS, "base64").toString("utf8")
+  );
+} catch (error) {
+  console.error('Error parsing Google Cloud credentials:', error);
+  process.exit(1); // Exit the application if credentials are invalid
+}
 const bigqueryClient = new BigQuery({
   projectId: "hopeful-history-405018",
-  keyFilename: path.join(__dirname, "hopeful-history-405018-bee125474176.json"), // Ensure this path is correct
+  credentials,
 });
 
 const app = express();
@@ -316,13 +329,7 @@ app.post("/datewises", async (req, res) => {
 
 app.post("/datewisesCategory", async (req, res) => {
   try {
-    let { 
-      from, 
-      to, 
-      metric,
-      offset = 0,
-      limit = 10
-    } = req.body;
+    let { from, to, metric, offset = 0, limit = 10 } = req.body;
 
     console.log(req.body);
 
@@ -346,7 +353,7 @@ app.post("/datewisesCategory", async (req, res) => {
         FROM \`hopeful-history-405018.Quickcommerce_final.product_sales_stock_spends_combined\` 
         WHERE brand_name = 'Lifelong'
         AND date BETWEEN '${fromDate}' AND '${toDate}'
-      `
+      `,
     });
 
     const query = `
@@ -362,9 +369,9 @@ app.post("/datewisesCategory", async (req, res) => {
     const categoryGrouping = await groupByCategory(rows);
     const summaryData = await summary(categoryGrouping);
 
-    res.status(200).json({ 
-      success: true, 
-      data: categoryGrouping, 
+    res.status(200).json({
+      success: true,
+      data: categoryGrouping,
       summary: summaryData,
       pagination: {
         total: totalCount[0][0].total,
@@ -372,7 +379,7 @@ app.post("/datewisesCategory", async (req, res) => {
         limit: limit,
         currentPage: Math.floor(offset / limit) + 1,
         totalPages: Math.ceil(totalCount[0][0].total / limit),
-      }
+      },
     });
   } catch (error) {
     console.error("Error running query:", error);
@@ -382,13 +389,7 @@ app.post("/datewisesCategory", async (req, res) => {
 
 app.post("/datewisesSubCategory", async (req, res) => {
   try {
-    let { 
-      from, 
-      to, 
-      metric,
-      offset = 0,
-      limit = 10
-    } = req.body;
+    let { from, to, metric, offset = 0, limit = 10 } = req.body;
 
     console.log(req.body);
 
@@ -412,7 +413,7 @@ app.post("/datewisesSubCategory", async (req, res) => {
         FROM \`hopeful-history-405018.Quickcommerce_final.product_sales_stock_spends_combined\` 
         WHERE brand_name = 'Lifelong'
         AND date BETWEEN '${fromDate}' AND '${toDate}'
-      `
+      `,
     });
 
     const query = `
@@ -428,9 +429,9 @@ app.post("/datewisesSubCategory", async (req, res) => {
     const categoryGrouping = await groupBySubcategory(rows);
     const summaryData = await summary(categoryGrouping);
 
-    res.status(200).json({ 
-      success: true, 
-      data: categoryGrouping, 
+    res.status(200).json({
+      success: true,
+      data: categoryGrouping,
       summary: summaryData,
       pagination: {
         total: totalCount[0][0].total,
@@ -438,7 +439,7 @@ app.post("/datewisesSubCategory", async (req, res) => {
         limit: limit,
         currentPage: Math.floor(offset / limit) + 1,
         totalPages: Math.ceil(totalCount[0][0].total / limit),
-      }
+      },
     });
   } catch (error) {
     console.error("Error running query:", error);
