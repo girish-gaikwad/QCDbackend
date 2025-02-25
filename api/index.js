@@ -447,5 +447,10 @@ app.post("/datewisesSubCategory", async (req, res) => {
   }
 });
 
+// app.listen(6060, () => console.log(`Server running on port 6060`));
 module.exports = app;
 
+// Run locally
+// if (require.main === module) {
+//   app.listen(6060, () => console.log(`Server running on http://localhost:6060`));
+// }
